@@ -17,6 +17,7 @@ import json
 import time
 import hashlib
 import logging
+import getpass
 import tempfile
 import importlib.util
 
@@ -45,7 +46,37 @@ log = logging.getLogger(__name__)
 
 
 def _get_kfp_client(host=None, namespace: str = "kubeflow"):
-    return Client(host=host, namespace=namespace)
+    user = getpass.getuser()
+    kf_dir = '/home/' + user + '/.kubeflow'
+    if not os.path.isdir(kf_dir):
+        if os.path.exists("/var/run/secrets/kubernetes.io/serviceaccount/namespace"):
+            return Client(host=host, namespace=namespace)
+        log.error(f"Directory `{kf_dir} is nor found. Couldn't read creds and create kfp.Client object")
+        error_msg = "Please, initialize KF session at first.\n See how to do it in " \
+            "`examples/kubeflow/kfp/Kubeflow_Utils_Example.ipynb` notebook.\n You need to import KfSession from " \
+            "ezmeral_kf_utils and then execute `kf_client` method on KfSession object before using kale extension. " \
+            "It'll look like this one: `KfSession(url).kf_client()`."
+        raise FileNotFoundError(error_msg)
+    else:
+        user_kf_file = "/home/" + user + "/.kubeflow/kf.json"
+        with open(user_kf_file) as fp:
+            datajson = json.load(fp)
+            endpoint = datajson['url']
+            session_cookie = datajson['session']
+            ca_cert = datajson.get('cert')
+            client = Client(host=endpoint, cookies=session_cookie, ssl_ca_cert=(ca_cert if (isinstance(ca_cert, str) and ca_cert != "") else None))
+            
+            # Verify if session cookie has expired. if so create a new session cookie and return client created with it.
+            kf_response=json.dumps(str(client.list_pipelines()))
+            if "'pipelines': None" in kf_response:
+                log.error("pipelines is None, so session cookie of kfp client has expired")
+                error_msg = "Session cookie is expired. Please, recreate KF session again.\n See how to do it in " \
+                    "`examples/kubeflow/kfp/Kubeflow_Utils_Example.ipynb` notebook.\n You need to import KfSession from "\
+                    "ezmeral_kf_utils and then execute `kf_client` method on KfSession object before using kale extension."
+                raise TimeoutError(error_msg)
+            else:
+                log.info("Successfully created kfp client from saved creds file")
+        return client
 
 
 def get_pipeline_id(pipeline_name: str, host: str = None) -> str:

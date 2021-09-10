@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import getpass
+
 import kubernetes
 
 
@@ -21,19 +24,24 @@ _api_v1_client = None
 _k8s_co_client = None
 
 
+def _get_kube_config_location():
+    user = getpass.getuser()
+    k8s_config_file = '/home/' + user + '/.kube/config'
+    return k8s_config_file
+
 def _load_config():
     try:
-        kubernetes.config.load_incluster_config()
-    except kubernetes.config.ConfigException:  # Not in a notebook server
-        try:
-            kubernetes.config.load_kube_config()
+        if not os.path.exists(_get_kube_config_location()):
+            kubernetes.config.load_incluster_config()
+            return
+        kubernetes.config.load_kube_config(config_file=_get_kube_config_location())
         # FIXME: `kubernetes` raises a TypeError when a `config` file is not
         #  found. This is fixed starting from version `11.0.0`, which raises
         #  the correct `ConfigException`. We cannot yet upgrade the package
         #  because `kfserving` relies on `kubernetes==10.0.1`
-        except TypeError:
-            raise kubernetes.config.ConfigException("Invalid kube-config file."
-                                                    " No configuration found.")
+    except TypeError:
+        raise kubernetes.config.ConfigException("Invalid kube-config file."
+                                                " No configuration found.")
 
 
 def get_v1_client():

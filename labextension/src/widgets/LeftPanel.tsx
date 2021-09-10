@@ -377,7 +377,7 @@ export class KubeflowKaleLeftPanel extends React.Component<IProps, IState> {
     }
   };
 
-  componentDidUpdate = (
+  componentDidUpdate = async (
     prevProps: Readonly<IProps>,
     prevState: Readonly<IState>,
   ) => {
@@ -395,6 +395,10 @@ export class KubeflowKaleLeftPanel extends React.Component<IProps, IState> {
         this.state.metadata,
         true,
       );
+    }
+
+    if (prevState.isEnabled === false && this.state.isEnabled === true) {
+      await this.setNotebookPanel(this.getActiveNotebook());
     }
   };
 
@@ -420,7 +424,7 @@ export class KubeflowKaleLeftPanel extends React.Component<IProps, IState> {
    */
   setNotebookPanel = async (notebook: NotebookPanel) => {
     // if there at least an open notebook
-    if (this.props.tracker.size > 0 && notebook) {
+    if (this.props.tracker.size > 0 && notebook && this.state.isEnabled) {
       const commands = new Commands(
         this.getActiveNotebook(),
         this.props.kernel,
@@ -625,11 +629,15 @@ export class KubeflowKaleLeftPanel extends React.Component<IProps, IState> {
     await this.getActiveNotebook().context.save();
 
     const commands = new Commands(this.getActiveNotebook(), this.props.kernel);
+
+    const kfp_dashboard_url = await commands.getKfpDashboardURL();
+
     const _deployIndex = ++deployIndex;
     const _updateDeployProgress = (x: DeployProgressState) => {
       this.updateDeployProgress(_deployIndex, {
         ...x,
         namespace: this.state.namespace,
+        kfp_dashboard_url: kfp_dashboard_url,
       });
     };
 

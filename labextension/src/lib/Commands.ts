@@ -208,6 +208,24 @@ export default class Commands {
     return baseImage;
   };
 
+  getKfpDashboardURL = async () => {
+    let kfpDashboardURL: string = null;
+    try {
+      kfpDashboardURL = await _legacy_executeRpc(
+        this._notebook,
+        this._kernel,
+        'kfp.get_kfp_dashboard_url',
+      );
+    } catch (error) {
+      if (error instanceof RPCError) {
+        console.warn("Kale couldn't fetch dashboard URL of KFP", error.error);
+      } else {
+        throw error;
+      }
+    }
+    return kfpDashboardURL;
+  };
+
   getExperiments = async (
     experiment: { id: string; name: string },
     experimentName: string,

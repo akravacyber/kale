@@ -19,6 +19,8 @@ import re
 import logging
 import tabulate
 
+from urllib.parse import urlparse
+
 from functools import lru_cache
 from kale.common import k8sutils
 
@@ -61,15 +63,27 @@ def parse_k8s_size(size):
 
 def get_namespace():
     """Get the current namespace."""
-    with open(NAMESPACE_PATH, "r") as f:
-        return f.read()
+    if os.path.exists(NAMESPACE_PATH):
+        with open(NAMESPACE_PATH, "r") as f:
+            return f.read()
+    jupyterhub_api_url = os.getenv('JUPYTERHUB_API_URL')
+    if jupyterhub_api_url is None:
+        raise RuntimeError("Env variable JUPYTERHUB_API_URL not found.")
+    fqdn = urlparse(jupyterhub_api_url).netloc
+    subdomains = fqdn.split('.')
+    svc_idx = subdomains.index("svc")
+    return subdomains[svc_idx - 1]
 
 
 def get_pod_name():
     """Get the current pod name."""
     pod_name = os.getenv("HOSTNAME")
     if pod_name is None:
-        raise RuntimeError("Env variable HOSTNAME not found.")
+        jupyterhub_api_url = os.getenv('JUPYTERHUB_API_URL')
+        if jupyterhub_api_url is None:
+            raise RuntimeError("Env variable HOSTNAME and JUPYTERHUB_API_URL not found.")
+        fqdn = urlparse(jupyterhub_api_url).netloc
+        return fqdn.split('.')[0]
     return pod_name
 
 

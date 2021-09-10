@@ -68,7 +68,7 @@ export const DeployProgress: React.FunctionComponent<DeployProgress> = props => 
     if (!pipeline.pipeline || !pipeline.pipeline.pipelineid) {
       return '#';
     }
-    const link = `${window.location.origin}/_/pipeline/#/pipelines/details/${pipeline.pipeline.pipelineid}/version/${pipeline.pipeline.versionid}`;
+    const link = `${props.kfp_dashboard_url}/_/pipeline/#/pipelines/details/${pipeline.pipeline.pipelineid}/version/${pipeline.pipeline.versionid}`;
     return props.namespace
       ? link.replace('#', `?ns=${props.namespace}#`)
       : link;
@@ -80,7 +80,7 @@ export const DeployProgress: React.FunctionComponent<DeployProgress> = props => 
     if (!run.id) {
       return '#';
     }
-    const link = `${window.location.origin}/_/pipeline/#/runs/details/${run.id}`;
+    const link = `${props.kfp_dashboard_url}/_/pipeline/#/runs/details/${run.id}`;
     return props.namespace
       ? link.replace('#', `?ns=${props.namespace}#`)
       : link;
@@ -163,7 +163,7 @@ export const DeployProgress: React.FunctionComponent<DeployProgress> = props => 
     if (!experimentId) {
       return '#';
     }
-    const link = `${window.location.origin}/_/pipeline/#/experiments/details/${experimentId}`;
+    const link = `${props.kfp_dashboard_url}/_/pipeline/#/experiments/details/${experimentId}`;
     return props.namespace
       ? link.replace('#', `?ns=${props.namespace}#`)
       : link;
@@ -439,7 +439,7 @@ export const DeployProgress: React.FunctionComponent<DeployProgress> = props => 
       ) : null}
 
       {props.showKatibProgress ? (
-        <KatibProgress experiment={props.katib} />
+        <KatibProgress experiment={props.katib} kfp_dashboard_url={props.kfp_dashboard_url} />
       ) : null}
     </div>
   );

@@ -12,13 +12,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import kfp
+import os
+import json
+import getpass
+from urllib.parse import urlparse
 
 from kale.common import kfputils
 
 
 def _get_client(host=None):
-    return kfp.Client()
+    return kfputils._get_kfp_client()
 
 
 def list_experiments(request):
@@ -103,3 +106,16 @@ def get_run(request, run_id):
     client = _get_client()
     run = client.get_run(run_id).run
     return {"id": run.id, "name": run.name, "status": run.status}
+
+def get_kfp_dashboard_url(request):
+    """Get URL of Kubeflow Pipelines dashboard."""
+    user = getpass.getuser()
+    user_kf_file = "/home/" + user + "/.kubeflow/kf.json"
+    if not os.path.isfile(user_kf_file):
+        raise FileNotFoundError("Failed to get user config of KFP, file not found.")
+    with open(user_kf_file) as fp:
+        datajson = json.load(fp)
+        endpoint = datajson['url']
+    fqdn = urlparse(endpoint).netloc
+    protocol = urlparse(endpoint).scheme
+    return f"{protocol}://{fqdn}"

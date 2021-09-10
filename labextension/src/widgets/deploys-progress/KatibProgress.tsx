@@ -53,6 +53,7 @@ enum KatibExperimentStatusMessage {
 
 interface IKatibProgressProps {
   experiment: IKatibExperiment;
+  kfp_dashboard_url?: string;
 }
 
 export const KatibProgress: React.FunctionComponent<IKatibProgressProps> = props => {
@@ -135,7 +136,7 @@ export const KatibProgress: React.FunctionComponent<IKatibProgressProps> = props
     );
   };
 
-  const getComponent = (experiment: IKatibExperiment) => {
+  const getComponent = (experiment: IKatibExperiment, kfp_dashboard_url?: string) => {
     let tooltipSet = false;
     let styles = { color: '#5f6368', height: 18, width: 18 };
     let IconComponent = <UnknownIcon style={styles} />;
@@ -175,14 +176,14 @@ export const KatibProgress: React.FunctionComponent<IKatibProgressProps> = props
 
     return tooltipSet ? (
       <React.Fragment>
-        <KatibExperimentLink experiment={experiment}>
+        <KatibExperimentLink experiment={experiment} kfp_dashboard_url={kfp_dashboard_url}>
           {getText(experiment)}
         </KatibExperimentLink>
         {IconComponent}
       </React.Fragment>
     ) : (
       <React.Fragment>
-        <KatibExperimentLink experiment={experiment}>
+        <KatibExperimentLink experiment={experiment} kfp_dashboard_url={kfp_dashboard_url}>
           {getText(experiment)}
           {IconComponent}
         </KatibExperimentLink>
@@ -202,7 +203,7 @@ export const KatibProgress: React.FunctionComponent<IKatibProgressProps> = props
       </React.Fragment>
     );
   } else {
-    katibTpl = getComponent(props.experiment);
+    katibTpl = getComponent(props.experiment, props.kfp_dashboard_url);
   }
 
   let katibRunsTpl = undefined;
@@ -248,20 +249,22 @@ export const KatibProgress: React.FunctionComponent<IKatibProgressProps> = props
 const KatibExperimentLink: React.FC<{
   experiment: IKatibExperiment;
   children?: any;
-}> = ({ experiment, children }) => {
+  kfp_dashboard_url?: string;
+}> = ({ experiment, children, kfp_dashboard_url }) => {
   const [link, setLink] = React.useState('#');
 
   React.useEffect(() => {
-    updateLink(experiment);
+    updateLink(experiment, kfp_dashboard_url);
   });
 
-  const updateLink = (experiment: IKatibExperiment) => {
+  const updateLink = (experiment: IKatibExperiment, kfp_dashboard_url?: string) => {
     if (!experiment || !experiment.name || !experiment.namespace) {
       return;
     }
     // Initialize link to KWA. If it is not available, point to legacy Katib UI
-    const kwaLink = `/katib/experiment/${experiment.name}?ns=${experiment.namespace}`;
-    const legacyLink = `/katib/?ns=${experiment.namespace}#/katib/hp_monitor/${experiment.namespace}/${experiment.name}`;
+
+    const kwaLink = `${kfp_dashboard_url}/katib/experiment/${experiment.name}?ns=${experiment.namespace}`;
+    const legacyLink = `${kfp_dashboard_url}/katib/?ns=${experiment.namespace}#/katib/hp_monitor/${experiment.namespace}/${experiment.name}`;
     headURL(kwaLink)
       .then(res => {
         if (res && res.status >= 200 && res.status < 400) {

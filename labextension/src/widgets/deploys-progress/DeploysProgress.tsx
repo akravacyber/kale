@@ -44,6 +44,7 @@ export type DeployProgressState = {
   deleted?: boolean;
   docManager?: IDocumentManager;
   namespace?: string;
+  kfp_dashboard_url?: string;
 };
 
 interface DeploysProgress {
@@ -84,6 +85,7 @@ export const DeploysProgress: React.FunctionComponent<DeploysProgress> = props =
             onRemove={_onPanelRemove(+index)}
             docManager={dpState.docManager}
             namespace={dpState.namespace}
+            kfp_dashboard_url={dpState.kfp_dashboard_url}
           />
         );
       });
